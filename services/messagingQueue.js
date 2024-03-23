@@ -2,12 +2,16 @@
 const amqp = require('amqplib');
 const { QUEUE_NAME } = require("../constants");
 
-const getMQ = async () => {
-  const conn = await amqp.connect("amqp://localhost");
-  const channel = await conn.createChannel();
-  await channel.assertQueue(QUEUE_NAME);
+let channel;
 
-  return channel;
+const initMessagingQueue = async () => {
+  const conn = await amqp.connect("amqp://localhost");
+  channel = await conn.createChannel();
+  await channel.assertQueue(QUEUE_NAME);
 };
 
-module.exports = { getMQ };
+const sendMessage = async (value) => {
+  channel.sendToQueue(QUEUE_NAME, Buffer.from(value));
+};
+
+module.exports = { initMessagingQueue, sendMessage };
