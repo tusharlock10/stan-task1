@@ -12,6 +12,10 @@ const initMessagingQueue = async () => {
   await channel.assertQueue(NOTIFY_COUNTER_QUEUE);
 };
 
+const purgeQueue = async (queue) => {
+  await channel.purgeQueue(queue);
+};
+
 const closeChannel = async () => {
   await channel.close();
   await connection.close();
@@ -40,4 +44,4 @@ const onMessageReceived = (queue, consumerFunc) => {
   });
 };
 
-module.exports = { initMessagingQueue, sendMessage, onMessageReceived, closeChannel };
+module.exports = { initMessagingQueue, sendMessage, onMessageReceived, closeChannel ,purgeQueue };
