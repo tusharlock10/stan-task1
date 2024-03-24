@@ -5,7 +5,7 @@ const { initMessagingQueue, onMessageReceived, purgeQueue } = require('./service
 
 const readCounter = async () => {
   const counter = await getCounterValue();
-  console.log("Counter value is : ", counter);
+  console.log("Current value of counter is : ", counter);
 };
 
 const main = async () => {
