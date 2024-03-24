@@ -4,7 +4,7 @@
 
 const cluster = require('cluster');
 const process = require('process');
-const { PROCESSES } = require('./constants');
+const { PROCESSES, UPDATE_COUNTER_QUEUE } = require('./constants');
 const { initRedisClient, setCounterValue } = require('./services/redisClient');
 const { initMessagingQueue, sendMessage, closeChannel } = require('./services/messagingQueue');
 
@@ -18,7 +18,7 @@ const main = async () => {
 
     await setCounterValue(0);
 
-    console.log(`Spawning ${PROCESSES} processes`)
+    console.log(`Spawning ${PROCESSES} processes`);
     for (let i = 0; i < PROCESSES; i++) {
       cluster.fork();
     }
@@ -32,7 +32,7 @@ const main = async () => {
     // worker process
     // send message to update the counter value from 1-10
     const updateValue = Math.floor(Math.random() * 10) + 1;
-    const sent = sendMessage(updateValue);
+    const sent = sendMessage(UPDATE_COUNTER_QUEUE, updateValue);
     if (sent) {
       console.log("Sent message to update counter by : ", updateValue);
     } else {

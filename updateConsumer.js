@@ -1,28 +1,33 @@
 const { setTimeout } = require('node:timers/promises');
+const { NOTIFY_COUNTER_QUEUE, UPDATE_COUNTER_QUEUE } = require('./constants');
 const { initRedisClient, getCounterValue, setCounterValue, lockCounter, unlockCounter } = require('./services/redisClient');
-const { initMessagingQueue, onMessageReceived } = require('./services/messagingQueue');
+const { initMessagingQueue, onMessageReceived, sendMessage } = require('./services/messagingQueue');
 
-const updateCounter = async (message) => {
-  while (true) {
-    // check for lock on the counter
-    const isLocked = await lockCounter();
-    if (!isLocked) {
-      // if lock is not acquired, retry after 50 ms
-      await setTimeout(50);
-    } else {
-      break;
-    }
+const acquireCounterLock = async () => {
+  let isLocked = false;
+  while (!isLocked) {
+    // try to lock the counter
+    isLocked = await lockCounter();
+    // if not locked, retry after 50 ms
+    if (!isLocked) await setTimeout(50);
   }
+};
+
+const updateCounter = async (value) => {
+  // wait for lock to be acquired
+  await acquireCounterLock();
 
   const counter = await getCounterValue();
-  const updateValue = JSON.parse(message.content);
-  const newValue = counter + updateValue;
+  const newValue = counter + value;
 
-  // set the new counter value and unlock the counter
+  // set the new counter value
+  // notify about the updated counter value
+  // unlock the counter
   await setCounterValue(newValue);
+  await sendMessage(NOTIFY_COUNTER_QUEUE, newValue);
   await unlockCounter();
 
-  console.log(`Updated counter ${counter} by ${updateValue} = ${newValue}`);
+  console.log(`Updated counter ${counter} by ${value} = ${newValue}`);
 };
 
 const main = async () => {
@@ -31,7 +36,7 @@ const main = async () => {
   await unlockCounter();
 
   console.log("Listening for counter updates ... ");
-  onMessageReceived(updateCounter);
+  onMessageReceived(UPDATE_COUNTER_QUEUE, updateCounter);
 };
 
 main();
